@@ -1,136 +1,245 @@
-# Cryptographic Core — Chaum's Blind Signature
-### Member 1 | InfoSec Project | Blind Digital Signatures
+# 🔐 Blind Digital Signatures E-Voting System
+
+![Python](https://img.shields.io/badge/Python-3.x-blue.svg)
+![Flask](https://img.shields.io/badge/Flask-REST%20API-black.svg)
+![Cryptography](https://img.shields.io/badge/Cryptography-Blind%20Signatures-red.svg)
+![Status](https://img.shields.io/badge/Project-Academic-green.svg)
 
 ---
 
-## Overview
+## 📌 Overview
 
-This module implements **Chaum's RSA-based Blind Signature Scheme** — the cryptographic foundation for the anonymous e-voting system.
+This project implements a **secure and privacy-preserving electronic voting system** using **Chaum’s Blind Signature Scheme** with RSA cryptography.
 
-### Protocol (in plain English)
-
-```
-Voter                              Authority
-  |                                   |
-  |-- 1. blind(vote, pub_key) ------->|  ← signer never sees real vote
-  |                                   |
-  |<- 2. sign_blinded(blinded, priv) -|  ← signs without knowing content
-  |                                   |
-  |-- 3. unblind(blind_sig, r) ------>  ← voter removes blinding factor
-  |
-  |-- 4. verify(vote, sig, pub_key)      ← anyone can verify
-```
+The system ensures that:
+- Votes are **verified without revealing voter choice**
+- The Election Authority cannot link identities to votes
+- Each vote is **authentic, private, and tamper-proof**
 
 ---
 
-## Setup
+## 👥 Team Members
 
+- Sarita Sangrez (23I-2088)  
+- Amna Ali (23I-2067)  
+- Fatima Naeem (23I-2046)  
+- Rumaisah Haroon (23I-2106)  
+
+**Course:** CS-3002 Information Security  
+**Submission Date:** 28/04/2026  
+
+---
+
+## 🏗️ System Architecture
+
+### 📊 High-Level Architecture
+
+```mermaid
+flowchart LR
+A[Voter / Frontend] --> B[Blinding Module]
+B --> C[Election Authority API]
+C --> D[Blind Signature Returned]
+D --> E[Unblinding Module]
+E --> F[Submit Vote API]
+F --> G[Verification Engine]
+G --> H[Results Database]
+```
+
+```mermaid
+sequenceDiagram
+participant V as Voter
+participant F as Frontend
+participant S as Server (Authority)
+
+V->>F: Select Vote
+F->>F: Blind Vote (H(m) * r^e mod n)
+F->>S: Send Blinded Message
+S->>S: Sign Blinded Message (m^d mod n)
+S->>F: Return Blind Signature
+F->>F: Unblind Signature
+F->>S: Submit (message, signature)
+S->>S: Verify & Store Vote
+
+```
+## ✨ Features
+
+* 🔐 RSA-based blind signature implementation
+* 🧠 Chaum’s anonymous voting protocol
+* 🌐 Flask REST API backend
+* 💻 Interactive frontend workflow
+* 🧪 Attack simulation and testing
+* 🚫 Replay protection system
+* ✔ Signature verification engine
+* 📊 Live results dashboard
+
+---
+
+## ⚙️ System Components
+
+### 1. Cryptographic Core
+* RSA key generation (2048-bit)
+* Blinding & unblinding operations
+* Signature generation & verification
+
+### 2. Backend (Election Authority)
+* Flask REST API
+* Signs blinded votes without viewing content
+* Prevents duplicate voting
+* Stores election results
+
+### 3. Frontend (Voter Interface)
+* Vote selection system
+* Performs blinding locally
+* Handles unblinding process
+* Communicates with backend APIs
+
+### 4. Security Layer
+* Simulated attacks: Replay, Forgery, and Message tampering
+* Threat model evaluation
+
+---
+
+## 🧾 Threat Model
+
+### Actors
+* **Voter** → Untrusted
+* **Election Authority** → Semi-trusted
+* **Adversary** → Fully untrusted
+
+### Assets
+* Vote confidentiality
+* Signature integrity
+* Voter anonymity
+* Election correctness
+
+---
+
+## ⚠️ Attack Analysis
+
+* **🔁 Replay Attack:** Prevented using token tracking (`used_tokens` set).
+* **🧾 Forgery Attack:** Blocked by RSA EU-CMA security.
+* **✏️ Message Tampering:** Detected via hash mismatch verification.
+* **🕵️ MITM Attack:** Mitigated via secure API communication (TLS-ready design).
+
+---
+
+## 🛠️ Tech Stack
+
+* Python 3.x
+* Flask
+* PyCryptodome
+* Flask-CORS
+* HTML, CSS, JavaScript
+* REST APIs
+
+---
+
+## 🚀 Setup Instructions
+
+### 1. Install Dependencies
 ```bash
-pip install -r requirements.txt
-```
-
----
-
-## Usage (for other team members)
-
-```python
-from crypto import generate_keys, blind_message, sign_blinded, unblind_signature, verify_signature
-
-# Authority: generate keys once, publish public key
-kp = generate_keys(key_size=2048)
-
-# Voter: blind their vote
-vote = b"vote:candidate_alice"
-blinded_msg = blind_message(vote, kp.public_key)
-
-# Authority: sign the blinded message (never sees actual vote)
-blind_sig = sign_blinded(blinded_msg.blinded, kp.private_key)
-
-# Voter: remove blinding factor
-signature = unblind_signature(blind_sig, blinded_msg, kp.public_key)
-
-# Anyone: verify the vote is authentic
-is_valid = verify_signature(vote, signature, kp.public_key)
-print(is_valid)  # True
-```
-
-## Sharing Public Key (PEM) with Other Modules
-
-```python
-from crypto import export_public_key_pem, import_public_key_pem
-
-# Export (Member 1 / Authority)
-pem = export_public_key_pem(kp)
-
-# Import (Member 2, 3 — backend/frontend)
-pub_key = import_public_key_pem(pem)
-```
-
----
-
-## Running Tests
-
-```bash
-python tests/test_crypto.py
-```
-
----
-
-## Backend & System Integration — Member 2
-
-The backend is a Flask server that acts as the Election Authority. It exposes API routes for the frontend to call, uses crypto functions internally, and enforces all system-level security rules.
-
-### What it does
-
-- Generates an RSA key pair on startup (private key never leaves the server)
-- Exposes the public key so voters can blind their messages
-- Signs blinded messages without ever seeing the real vote
-- Verifies unblinded signatures
-- Prevents double voting via token tracking
-
-### How to run
-
-```bash
-# Install dependencies
 pip install flask flask-cors pycryptodome requests
 
-# Start the server (Terminal 1)
+Here is the formatted Markdown (`.md`) code for your project documentation. I have cleaned up the layout, structured the endpoints into a clean table, and used proper Markdown syntax for checklists and code blocks to make it highly readable.
+
+```markdown
+# 🗳️ Blind Signature E-Voting System
+
+This project demonstrates a full implementation of **Chaum’s Blind Signature Scheme** in an e-voting system, ensuring robust privacy and security guarantees.
+
+---
+
+## 🚀 Setup Instructions
+
+### 1. Install Dependencies
+```bash
+pip install flask flask-cors pycryptodome requests
+
+```
+
+### 2. Run Backend
+
+```bash
 python backend/app.py
 
-# Run integration tests (Terminal 2)
+```
+
+### 3. Run Tests
+
+```bash
 python backend/test_backend.py
-```
-
-### API Routes
-
-| Route | Method | Purpose |
-|---|---|---|
-| `/public-key` | GET | Returns RSA public key (n, e, PEM) |
-| `/sign` | POST | Signs a blinded message — server stays blind |
-| `/verify` | POST | Checks if a signature is valid |
-| `/submit-vote` | POST | Verifies + records vote + blocks duplicates |
-| `/results` | GET | Returns live vote tally |
-
-### Tests
 
 ```
-7/7 passed — double voting blocked, forgery blocked, tampering blocked
+
+### 4. Run Frontend
+
+1. Install the VS Code **Live Server** extension.
+2. Right-click `frontend/index.html`.
+3. Select **Open with Live Server**.
+
+---
+
+## 🔌 API Endpoints
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/public-key` | `GET` | Fetch RSA public key |
+| `/sign` | `POST` | Sign blinded message |
+| `/verify` | `POST` | Verify signature |
+| `/submit-vote` | `POST` | Submit vote |
+| `/results` | `GET` | Get live results |
+
+---
+
+## 🔐 Security Properties
+
+* **🔒 Confidentiality** → Vote is hidden from authority.
+* **🛡️ Integrity** → Tampering invalidates the signature.
+* **🧠 Authenticity** → Only the designated authority can sign votes.
+* **👤 Anonymity** → The final vote cannot be linked back to the voter.
+* **🚫 Replay Protection** → Prevents duplicate voting attempts.
+
+---
+
+## 📊 Performance Summary
+
+* **RSA Signing:** Moderate computation cost (private key operation).
+* **Verification:** Fast performance (due to public exponent optimization).
+* **Scalability:** Fully functional and optimized for demo-scale elections.
+
+---
+
+## 🧪 Test Results
+
+* [x] Public key retrieval
+* [x] Full blind-sign-unblind flow
+* [x] Replay attack prevention
+* [x] Forged signature rejection
+* [x] Message tampering detection
+* [x] Multi-voter simulation
+* [x] Results aggregation
+
+---
+
+## 📚 References
+
+* Chaum, D. (1982). *Blind Signatures for Untraceable Payments*.
+* NIST Cybersecurity Framework 2.0.
+* [PyCryptodome Documentation](https://pycryptodome.readthedocs.io/)
+* [Flask Documentation](https://flask.palletsprojects.com/)
+* Python `secrets` module.
+
+---
+
+## 📌 Summary
+
+This implementation successfully bridges cryptographic theory with a practical web interface, guaranteeing:
+
+* **🔐 Privacy** (via blindness)
+* **✔ Integrity** (via verification)
+* **🧠 Authenticity** (via RSA signatures)
+* **🚫 Replay Protection** (via unique identifiers)
+
 ```
 
-## File Structure
-
-```
-crypto/
-├── crypto.py        ← All 5 core functions + helpers
-├── threat_model.md  ← Formal threat analysis
-└── __init__.py      ← Clean public API
-
-tests/
-└── test_crypto.py   ← 11 tests covering all cases
-
-```
-backend/
-├── app.py            ← Flask server (5 routes)
-├── test_backend.py   ← Integration test suite (7 tests)
-└── requirements.txt  ← flask, flask-cors, pycryptodome, requests
 ```
